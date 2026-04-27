@@ -1,6 +1,6 @@
 # CompTIA Security+ (SY0-701) Flashcard Study App
 
-A browser-based flashcard app designed for studying the CompTIA Security+ certification exam. 237 cards covering all 5 exam domains: General Security Concepts, Threats Vulnerabilities & Mitigations, Security Architecture, Security Operations, and Security Program Management.
+A browser-based flashcard app designed for studying the CompTIA Security+ certification exam. 266 cards covering all 5 exam domains: General Security Concepts, Threats Vulnerabilities & Mitigations, Security Architecture, Security Operations, and Security Program Management.
 
 ## How to use
 
