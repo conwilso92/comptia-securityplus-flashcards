@@ -1,0 +1,457 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>CompTIA Security+ Flashcards</title>
+<style>
+  * { margin: 0; padding: 0; box-sizing: border-box; }
+  body { font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif; background: #0f1117; color: #e2e8f0; min-height: 100vh; }
+  .app { max-width: 700px; margin: 0 auto; padding: 20px; }
+  h1 { font-size: 1.4rem; text-align: center; margin-bottom: 4px; color: #f1f5f9; }
+  .subtitle { text-align: center; color: #64748b; font-size: 0.85rem; margin-bottom: 24px; }
+  .cat-bar { display: flex; flex-wrap: wrap; gap: 6px; justify-content: center; margin-bottom: 20px; }
+  .cat-btn { padding: 6px 14px; border-radius: 20px; border: 1px solid #334155; background: transparent; color: #94a3b8; font-size: 0.78rem; cursor: pointer; transition: all 0.2s; }
+  .cat-btn:hover { border-color: #60a5fa; color: #60a5fa; }
+  .cat-btn.active { background: #1e3a5f; border-color: #3b82f6; color: #93c5fd; }
+  .progress-wrap { display: flex; align-items: center; gap: 12px; margin-bottom: 20px; }
+  .progress-bar { flex: 1; height: 6px; background: #1e293b; border-radius: 3px; overflow: hidden; }
+  .progress-fill { height: 100%; background: linear-gradient(90deg, #3b82f6, #8b5cf6); border-radius: 3px; transition: width 0.4s; }
+  .progress-text { font-size: 0.8rem; color: #64748b; white-space: nowrap; }
+  .card-container { perspective: 1000px; margin-bottom: 20px; }
+  .card { position: relative; width: 100%; min-height: 220px; cursor: pointer; transition: transform 0.5s; transform-style: preserve-3d; }
+  .card.flipped { transform: rotateY(180deg); }
+  .card-face { position: absolute; inset: 0; backface-visibility: hidden; border-radius: 16px; padding: 32px 28px; display: flex; flex-direction: column; justify-content: center; align-items: center; text-align: center; }
+  .card-front { background: linear-gradient(145deg, #1e293b, #162032); border: 1px solid #334155; }
+  .card-back { background: linear-gradient(145deg, #1a2744, #152238); border: 1px solid #2d4a6f; transform: rotateY(180deg); }
+  .card-cat { font-size: 0.7rem; text-transform: uppercase; letter-spacing: 1.5px; color: #60a5fa; margin-bottom: 16px; font-weight: 600; }
+  .card-question { font-size: 1.15rem; line-height: 1.5; color: #f1f5f9; }
+  .card-answer { font-size: 1.2rem; line-height: 1.6; color: #a5f3fc; font-weight: 600; }
+  .card-answer .acr-full { display: block; font-size: 0.85rem; color: #7dd3fc; font-weight: 400; margin-top: 6px; }
+  .card-hint { font-size: 0.75rem; color: #475569; margin-top: 20px; }
+  .conf-row { display: flex; gap: 10px; margin-bottom: 20px; }
+  .conf-btn { flex: 1; padding: 12px; border-radius: 10px; border: none; font-size: 0.85rem; font-weight: 600; cursor: pointer; transition: all 0.2s; }
+  .conf-btn:hover { transform: translateY(-1px); }
+  .conf-miss { background: #7f1d1d; color: #fca5a5; }
+  .conf-miss:hover { background: #991b1b; }
+  .conf-shaky { background: #78350f; color: #fcd34d; }
+  .conf-shaky:hover { background: #92400e; }
+  .conf-got { background: #14532d; color: #86efac; }
+  .conf-got:hover { background: #166534; }
+  .nav-row { display: flex; justify-content: space-between; align-items: center; }
+  .nav-btn { padding: 10px 22px; border-radius: 10px; border: 1px solid #334155; background: #1e293b; color: #94a3b8; cursor: pointer; font-size: 0.85rem; transition: all 0.2s; }
+  .nav-btn:hover { background: #334155; color: #e2e8f0; }
+  .nav-btn:disabled { opacity: 0.3; cursor: default; }
+  .shuffle-btn { padding: 10px 22px; border-radius: 10px; border: 1px solid #334155; background: transparent; color: #94a3b8; cursor: pointer; font-size: 0.85rem; }
+  .shuffle-btn:hover { border-color: #8b5cf6; color: #a78bfa; }
+  .stats { display: flex; justify-content: center; gap: 24px; margin-top: 24px; padding: 16px; background: #1e293b; border-radius: 12px; }
+  .stat { text-align: center; }
+  .stat-num { font-size: 1.3rem; font-weight: 700; }
+  .stat-label { font-size: 0.7rem; color: #64748b; text-transform: uppercase; letter-spacing: 1px; margin-top: 2px; }
+  .stat-miss .stat-num { color: #f87171; }
+  .stat-shaky .stat-num { color: #fbbf24; }
+  .stat-got .stat-num { color: #4ade80; }
+  .stat-unseen .stat-num { color: #64748b; }
+  .filter-mode { text-align: center; font-size: 0.78rem; color: #64748b; margin-bottom: 6px; }
+  .empty-state { text-align: center; padding: 60px 20px; color: #64748b; }
+  .empty-state p { margin-bottom: 12px; }
+</style>
+</head>
+<body>
+<div class="app" id="app"></div>
+<script>
+const CARDS = [
+
+  // ========== GENERAL SECURITY CONCEPTS (12%) ==========
+  { cat: "Security Concepts", q: "What are the three principles of the CIA triad?", a: "Confidentiality, Integrity, Availability" },
+  { cat: "Security Concepts", q: "What does Confidentiality mean in the CIA triad?", a: "Only authorized users can access data" },
+  { cat: "Security Concepts", q: "What does Integrity mean in the CIA triad?", a: "Data is accurate, trustworthy, and has not been tampered with" },
+  { cat: "Security Concepts", q: "What does Availability mean in the CIA triad?", a: "Data and systems are accessible when needed" },
+  { cat: "Security Concepts", q: "What is nonrepudiation?", a: "The assurance that someone cannot deny having performed an action" },
+  { cat: "Security Concepts", q: "What does the DAD triad stand for?", a: "Disclosure, Alteration, Denial<span class='acr-full'>(The opposite of CIA — represents attack outcomes)</span>" },
+  { cat: "Security Concepts", q: "What security control type stops an attack before it occurs?", a: "Preventive control<span class='acr-full'>(e.g., firewalls, encryption, access control)</span>" },
+  { cat: "Security Concepts", q: "What security control type identifies attacks that have already occurred?", a: "Detective control<span class='acr-full'>(e.g., IDS, security cameras, audit logs)</span>" },
+  { cat: "Security Concepts", q: "What security control type reduces damage after an attack?", a: "Corrective control<span class='acr-full'>(e.g., restoring from backup after ransomware)</span>" },
+  { cat: "Security Concepts", q: "What security control type discourages attackers from attempting an attack?", a: "Deterrent control<span class='acr-full'>(e.g., warning signs, guard dogs, barbed wire)</span>" },
+  { cat: "Security Concepts", q: "What security control type informs employees what they should do?", a: "Directive control<span class='acr-full'>(e.g., policies, procedures, training)</span>" },
+  { cat: "Security Concepts", q: "What is a compensating control?", a: "An alternative control used when the original requirement cannot be met, while still providing equivalent security" },
+  { cat: "Security Concepts", q: "What is a gap analysis in cybersecurity?", a: "A review of all security controls to find where they fail to meet objectives" },
+  { cat: "Security Concepts", q: "What are the three security control categories?", a: "Technical, Administrative (Managerial), Physical" },
+  { cat: "Security Concepts", q: "What is the principle of least privilege?", a: "Users and processes receive only the minimum access needed to perform their job" },
+  { cat: "Security Concepts", q: "What is defense in depth?", a: "A layered security strategy using multiple controls so no single failure compromises the system" },
+  { cat: "Security Concepts", q: "What is Zero Trust?", a: "A security model that never trusts and always verifies — every access request is authenticated regardless of location" },
+  { cat: "Security Concepts", q: "What are the key components of Zero Trust?", a: "Policy engines, policy administrators, policy enforcement points, adaptive identity" },
+  { cat: "Security Concepts", q: "What does threat scope reduction mean in Zero Trust?", a: "Limiting what a subject can do or access to minimize damage if a compromise occurs<span class='acr-full'>(also called 'limited blast radius')</span>" },
+  { cat: "Security Concepts", q: "What is data at rest?", a: "Data stored on disk, drives, or databases" },
+  { cat: "Security Concepts", q: "What is data in transit?", a: "Data moving across a network" },
+  { cat: "Security Concepts", q: "What is data in use?", a: "Data actively being processed in memory" },
+
+  // ========== THREATS, VULNERABILITIES & MITIGATIONS (22%) ==========
+  { cat: "Threats & Attacks", q: "What is a script kiddie?", a: "An unskilled attacker who uses tools and exploits written by others" },
+  { cat: "Threats & Attacks", q: "What is a hacktivist?", a: "An attacker who uses hacking to promote a political or social cause" },
+  { cat: "Threats & Attacks", q: "A sophisticated, long-duration attack often backed by nation-states or organized crime", a: "APT<span class='acr-full'>(Advanced Persistent Threat — a sophisticated, long-duration attack often backed by nation-states or organized crime)</span>" },
+  { cat: "Threats & Attacks", q: "What is a white-hat hacker?", a: "An authorized security professional who tests systems with permission to improve security" },
+  { cat: "Threats & Attacks", q: "What is a black-hat hacker?", a: "An unauthorized attacker with malicious intent" },
+  { cat: "Threats & Attacks", q: "What is a gray-hat hacker?", a: "An attacker who acts without authorization but intends to inform the target of vulnerabilities" },
+  { cat: "Threats & Attacks", q: "What is a zero-day attack?", a: "An attack exploiting a previously unknown vulnerability that has not yet been patched" },
+  { cat: "Threats & Attacks", q: "What is ransomware?", a: "Malware that encrypts a victim's files and demands payment for the decryption key" },
+  { cat: "Threats & Attacks", q: "What is a Trojan?", a: "Malware disguised as legitimate software that relies on users running it" },
+  { cat: "Threats & Attacks", q: "What is a worm?", a: "Self-replicating malware that spreads across networks without user interaction" },
+  { cat: "Threats & Attacks", q: "What is a rootkit?", a: "Malware that provides persistent backdoor access while hiding itself deep in the OS" },
+  { cat: "Threats & Attacks", q: "What is a backdoor?", a: "A method that bypasses normal authentication to give attackers unauthorized access" },
+  { cat: "Threats & Attacks", q: "What is a bot/botnet?", a: "A botnet is a group of infected devices remotely controlled by an attacker for DDoS attacks, spam, or cryptocurrency mining" },
+  { cat: "Threats & Attacks", q: "What is a keylogger?", a: "Malware that captures and records keystrokes to steal credentials and other input" },
+  { cat: "Threats & Attacks", q: "What is a logic bomb?", a: "Malicious code hidden inside programs that activates when specific conditions are met" },
+  { cat: "Threats & Attacks", q: "What is spyware?", a: "Malware designed to collect information about a user or organization without their knowledge" },
+  { cat: "Threats & Attacks", q: "What are PUPs?", a: "PUPs<span class='acr-full'>(Potentially Unwanted Programs — software installed without user awareness, often bundled with other software)</span>" },
+  { cat: "Threats & Attacks", q: "What is a fileless virus?", a: "Malware that operates entirely in memory without writing files to disk, making it harder to detect" },
+  { cat: "Threats & Attacks", q: "What is phishing?", a: "A mass social engineering attack using fraudulent emails to steal credentials or deliver malware" },
+  { cat: "Threats & Attacks", q: "What is spear phishing?", a: "A targeted phishing attack aimed at a specific person or organization" },
+  { cat: "Threats & Attacks", q: "What is whaling?", a: "Spear phishing targeting executives or high-value individuals" },
+  { cat: "Threats & Attacks", q: "What is vishing?", a: "Social engineering via phone calls<span class='acr-full'>(Voice phishing)</span>" },
+  { cat: "Threats & Attacks", q: "What is smishing?", a: "Social engineering via SMS text messages<span class='acr-full'>(SMS phishing)</span>" },
+  { cat: "Threats & Attacks", q: "What is tailgating?", a: "Following someone through a secure door without badging in" },
+  { cat: "Threats & Attacks", q: "What is shoulder surfing?", a: "Looking over someone's shoulder to steal sensitive information" },
+  { cat: "Threats & Attacks", q: "Floods a target from many sources to make it unavailable", a: "DDoS<span class='acr-full'>(Distributed Denial of Service — floods a target from many sources to make it unavailable)</span>" },
+  { cat: "Threats & Attacks", q: "What is a SYN flood?", a: "A DDoS attack that overwhelms a server with TCP SYN requests without completing the handshake" },
+  { cat: "Threats & Attacks", q: "What is an on-path attack?", a: "An attack where the attacker intercepts and potentially alters communication between two parties<span class='acr-full'>(formerly Man-in-the-Middle)</span>" },
+  { cat: "Threats & Attacks", q: "What is ARP spoofing?", a: "Sending fake ARP replies to link the attacker's MAC address to a legitimate IP address" },
+  { cat: "Threats & Attacks", q: "What is DNS poisoning?", a: "Corrupting DNS records to redirect users to malicious websites" },
+  { cat: "Threats & Attacks", q: "What is SQL injection?", a: "Inserting malicious SQL code into a query to manipulate a database" },
+  { cat: "Threats & Attacks", q: "What is blind SQL injection?", a: "SQL injection where the attacker receives no direct output but infers information from application behavior" },
+  { cat: "Threats & Attacks", q: "Injecting malicious scripts into web pages that execute in other users' browsers", a: "XSS<span class='acr-full'>(Cross-Site Scripting — injecting malicious scripts into web pages viewed by other users)</span>" },
+  { cat: "Threats & Attacks", q: "What is stored/persistent XSS?", a: "Malicious script is saved on the server and executed every time a user visits the affected page" },
+  { cat: "Threats & Attacks", q: "What is reflected XSS?", a: "Malicious script is embedded in a URL and reflected off the server to the victim's browser" },
+  { cat: "Threats & Attacks", q: "Tricks authenticated users into unknowingly submitting malicious requests", a: "CSRF<span class='acr-full'>(Cross-Site Request Forgery — tricks authenticated users into submitting malicious requests)</span>" },
+  { cat: "Threats & Attacks", q: "What is a buffer overflow?", a: "Writing more data to a memory buffer than it can hold, potentially overwriting adjacent memory to execute malicious code" },
+  { cat: "Threats & Attacks", q: "What is directory traversal?", a: "An attack that manipulates file path input to access directories and files outside the intended location" },
+  { cat: "Threats & Attacks", q: "What is a race condition?", a: "A vulnerability where the outcome depends on the sequence of events, exploitable when a program checks a condition and then acts before the state changes" },
+  { cat: "Threats & Attacks", q: "What is an evil twin attack?", a: "A rogue wireless access point that mimics a legitimate one to trick users into connecting" },
+  { cat: "Threats & Attacks", q: "What is bluejacking?", a: "Sending unsolicited messages to Bluetooth-enabled devices" },
+  { cat: "Threats & Attacks", q: "What is bluesnarfing?", a: "Unauthorized access to data on a Bluetooth device" },
+  { cat: "Threats & Attacks", q: "What is a replay attack?", a: "Capturing and retransmitting valid data (e.g., session cookies) to gain unauthorized access" },
+  { cat: "Threats & Attacks", q: "What is a password spraying attack?", a: "Trying a small number of commonly used passwords against many accounts to avoid lockout" },
+  { cat: "Threats & Attacks", q: "What is a dictionary attack?", a: "Using a list of common words and passwords to guess credentials" },
+  { cat: "Threats & Attacks", q: "What is a brute force attack?", a: "Systematically trying every possible combination of characters until the correct password is found" },
+  { cat: "Threats & Attacks", q: "What is credential stuffing?", a: "Using stolen username/password pairs from one breach to try to access other services" },
+  { cat: "Threats & Attacks", q: "What is an insider threat?", a: "An attack by an employee, contractor, or other authorized user who misuses their access" },
+  { cat: "Threats & Attacks", q: "What is cyberwarfare?", a: "Nation-state attacks using cyber techniques to sabotage infrastructure or gain political advantage" },
+  { cat: "Threats & Attacks", q: "A standardized unique identifier for publicly known security vulnerabilities", a: "CVE<span class='acr-full'>(Common Vulnerabilities and Exposures — a standard identifier for publicly known security vulnerabilities)</span>" },
+  { cat: "Threats & Attacks", q: "A standardized 0-10 score measuring the severity of a security vulnerability", a: "CVSS<span class='acr-full'>(Common Vulnerability Scoring System — standardized 0–10 score measuring vulnerability severity)</span>" },
+  { cat: "Threats & Attacks", q: "What CVSS score is considered Critical?", a: "9.0–10.0" },
+  { cat: "Threats & Attacks", q: "What CVSS score is considered High?", a: "7.0–8.9" },
+  { cat: "Threats & Attacks", q: "What is the MITRE ATT&CK framework?", a: "A knowledge base of adversary tactics and techniques based on real-world observations<span class='acr-full'>(Adversarial Tactics, Techniques & Common Knowledge)</span>" },
+  { cat: "Threats & Attacks", q: "What is the Cyber Kill Chain?", a: "A framework describing the stages of a cyberattack: Reconnaissance, Weaponization, Delivery, Exploitation, Installation, C2, Actions" },
+  { cat: "Threats & Attacks", q: "What is threat intelligence?", a: "Information about current and emerging threats used to inform security decisions" },
+  { cat: "Threats & Attacks", q: "Gathering threat data from publicly available sources", a: "OSINT<span class='acr-full'>(Open Source Intelligence — information gathered from publicly available sources)</span>" },
+  { cat: "Threats & Attacks", q: "What is an IoC?", a: "IoC<span class='acr-full'>(Indicator of Compromise — evidence that a system may have been breached, e.g., unusual logins, account lockouts)</span>" },
+
+  // ========== SECURITY ARCHITECTURE (18%) ==========
+  { cat: "Architecture", q: "What is network segmentation?", a: "Dividing a network into smaller zones to contain breaches and limit lateral movement" },
+  { cat: "Architecture", q: "What is a DMZ?", a: "DMZ<span class='acr-full'>(Demilitarized Zone — a network zone between the internet and internal network hosting public-facing services)</span>" },
+  { cat: "Architecture", q: "What is NAC?", a: "NAC<span class='acr-full'>(Network Access Control — verifies device posture and identity before granting network access)</span>" },
+  { cat: "Architecture", q: "What is the difference between fail open and fail closed?", a: "Fail open allows all traffic when a device fails; fail closed blocks all traffic when a device fails" },
+  { cat: "Architecture", q: "What is a firewall?", a: "A device or software that filters network traffic based on rules (ports, IPs, protocols)" },
+  { cat: "Architecture", q: "What is a stateful firewall?", a: "A firewall that tracks the state of connections and only allows packets that match established sessions" },
+  { cat: "Architecture", q: "What is a stateless firewall?", a: "A firewall that filters packets based only on header info (IP, port) without tracking connection state" },
+  { cat: "Architecture", q: "What is an NGFW?", a: "NGFW<span class='acr-full'>(Next-Generation Firewall — operates at Layer 7, performs deep packet inspection, app awareness)</span>" },
+  { cat: "Architecture", q: "Filters HTTP traffic to protect web applications from SQL injection, XSS, and OWASP threats", a: "WAF<span class='acr-full'>(Web Application Firewall — filters HTTP traffic to protect web applications from SQL injection, XSS, etc.)</span>" },
+  { cat: "Architecture", q: "What is an IDS?", a: "IDS<span class='acr-full'>(Intrusion Detection System — monitors traffic and alerts on threats but does not block)</span>" },
+  { cat: "Architecture", q: "What is an IPS?", a: "IPS<span class='acr-full'>(Intrusion Prevention System — monitors traffic and actively blocks threats)</span>" },
+  { cat: "Architecture", q: "Centralizes log collection, applies correlation rules, and generates alerts (Splunk, QRadar, ELK)", a: "SIEM<span class='acr-full'>(Security Information and Event Management — aggregates logs and alerts for centralized monitoring and analysis)</span>" },
+  { cat: "Architecture", q: "What is port mirroring/port spanning?", a: "Copying network traffic from one switch port to another for monitoring or analysis" },
+  { cat: "Architecture", q: "What is a VPN?", a: "VPN<span class='acr-full'>(Virtual Private Network — creates an encrypted tunnel over the internet for secure remote access)</span>" },
+  { cat: "Architecture", q: "What is a site-to-site VPN?", a: "Permanently connects two office networks over an encrypted tunnel" },
+  { cat: "Architecture", q: "What is a client-to-site VPN?", a: "Allows a remote user to securely connect to a corporate network" },
+  { cat: "Architecture", q: "What is split tunneling?", a: "A VPN configuration where only traffic destined for the corporate network uses the VPN tunnel" },
+  { cat: "Architecture", q: "What is a proxy server?", a: "An intermediary that inspects and forwards client requests, providing filtering, caching, and anonymity" },
+  { cat: "Architecture", q: "What is a honeypot?", a: "A decoy system designed to attract and detect attackers" },
+  { cat: "Architecture", q: "What is a honeynet?", a: "A network of honeypots used to study attacker behavior" },
+  { cat: "Architecture", q: "What is SCADA?", a: "SCADA<span class='acr-full'>(Supervisory Control and Data Acquisition — industrial control systems for managing infrastructure like power grids)</span>" },
+  { cat: "Architecture", q: "What is an embedded system?", a: "A device designed to perform a specific dedicated function within a larger system" },
+  { cat: "Architecture", q: "What is vertical cloud scaling?", a: "Increasing the capacity of an existing server (more CPU or RAM)" },
+  { cat: "Architecture", q: "What is horizontal cloud scaling?", a: "Adding more servers to a pool to distribute load" },
+  { cat: "Architecture", q: "What is the shared responsibility model?", a: "In cloud computing, the division of security duties between the cloud provider and the customer" },
+
+
+
+  { cat: "Architecture", q: "What is FaaS?", a: "FaaS<span class='acr-full'>(Function as a Service — serverless computing where code runs in response to events, e.g., AWS Lambda)</span>" },
+
+
+
+
+  { cat: "Architecture", q: "What is a hot site?", a: "A fully operational DR site mirroring production — fastest recovery" },
+  { cat: "Architecture", q: "What is a warm site?", a: "Infrastructure ready but no active equipment — days to recover" },
+  { cat: "Architecture", q: "What is a cold site?", a: "Empty space with no equipment — slowest recovery, weeks" },
+  { cat: "Architecture", q: "What is RPO?", a: "RPO<span class='acr-full'>(Recovery Point Objective — maximum acceptable data loss, measured in time)</span>" },
+  { cat: "Architecture", q: "What is RTO?", a: "RTO<span class='acr-full'>(Recovery Time Objective — maximum acceptable downtime before systems must be restored)</span>" },
+  { cat: "Architecture", q: "What is a tabletop exercise?", a: "A discussion-based simulation used to test incident response plans without real-world pressure" },
+  { cat: "Architecture", q: "What is a failover exercise?", a: "A planned simulation of system failure to verify that backup systems activate correctly" },
+  { cat: "Architecture", q: "What is Secure Boot?", a: "A UEFI feature that ensures only digitally signed, trusted bootloaders and OS software can run" },
+
+  // ========== SECURITY OPERATIONS (28%) ==========
+  { cat: "Security Operations", q: "What is vulnerability management?", a: "The process of identifying, prioritizing, and remediating vulnerabilities in an environment" },
+  { cat: "Security Operations", q: "What is a credentialed vulnerability scan?", a: "A vulnerability scan that uses valid credentials to log into systems and identify internal vulnerabilities" },
+  { cat: "Security Operations", q: "What is a non-credentialed vulnerability scan?", a: "A scan performed without credentials — sees only what an external attacker would see" },
+  { cat: "Security Operations", q: "What is penetration testing?", a: "Authorized testing that uses hacking techniques to identify and demonstrate exploitable vulnerabilities" },
+  { cat: "Security Operations", q: "What is a white-box pen test?", a: "Tester has full knowledge of the environment (network maps, credentials, source code)" },
+  { cat: "Security Operations", q: "What is a black-box pen test?", a: "Tester has no prior knowledge of the environment — simulates an external attacker" },
+  { cat: "Security Operations", q: "What is a gray-box pen test?", a: "Tester has partial knowledge of the environment" },
+  { cat: "Security Operations", q: "What does Nessus do?", a: "A commercial vulnerability scanner that identifies known vulnerabilities, misconfigurations, and compliance issues" },
+  { cat: "Security Operations", q: "What does Nikto do?", a: "An open-source web application scanner that tests for SQL injection, XSS, and other web vulnerabilities" },
+  { cat: "Security Operations", q: "What does Nmap do?", a: "A port scanner and network discovery tool that identifies open ports, services, and OS versions" },
+  { cat: "Security Operations", q: "What does Metasploit do?", a: "A penetration testing framework used to develop and execute exploits against target systems" },
+  { cat: "Security Operations", q: "What does Wireshark do?", a: "A packet capture and analysis tool that inspects network traffic in real time" },
+  { cat: "Security Operations", q: "What is the SDLC?", a: "SDLC<span class='acr-full'>(Software Development Life Cycle — the process for designing, creating, testing, and maintaining software)</span>" },
+  { cat: "Security Operations", q: "What are the SDLC environments in order?", a: "Development → Test/QA → Staging → Production" },
+  { cat: "Security Operations", q: "What is the Waterfall SDLC model?", a: "A linear, sequential development model where each phase must complete before the next begins" },
+  { cat: "Security Operations", q: "What is the Agile SDLC model?", a: "An iterative development model with short sprints and continuous collaboration and feedback" },
+  { cat: "Security Operations", q: "What is DevSecOps?", a: "Integrating security practices into every stage of the DevOps development and deployment pipeline" },
+  { cat: "Security Operations", q: "What is CI/CD?", a: "CI/CD<span class='acr-full'>(Continuous Integration/Continuous Deployment — automated processes for regularly building, testing, and deploying code)</span>" },
+  { cat: "Security Operations", q: "What is OWASP?", a: "OWASP<span class='acr-full'>(Open Web Application Security Project — organization providing free resources on secure coding and web app vulnerabilities)</span>" },
+  { cat: "Security Operations", q: "What are parameterized queries used for?", a: "Preventing SQL injection by separating SQL code from user-supplied data" },
+  { cat: "Security Operations", q: "What is code signing?", a: "Digitally signing software to verify the publisher's identity and ensure the code has not been modified" },
+  { cat: "Security Operations", q: "What is input validation?", a: "Checking user-supplied input before processing to prevent injection attacks and other exploits" },
+  { cat: "Security Operations", q: "What is hard-coded credentials?", a: "Credentials embedded directly in source code — a major security risk if code is exposed" },
+  { cat: "Security Operations", q: "What is incident response?", a: "The process of detecting, containing, eradicating, and recovering from security incidents" },
+  { cat: "Security Operations", q: "What are the six phases of incident response?", a: "Preparation, Detection/Identification, Containment, Eradication, Recovery, Lessons Learned" },
+  { cat: "Security Operations", q: "What is the first priority when responding to active ransomware?", a: "Containment — disconnect the infected system from the network immediately" },
+  { cat: "Security Operations", q: "What is the order of volatility in digital forensics?", a: "RAM → Swap/virtual memory → Network state → Running processes → Disk → Logs → Archives" },
+  { cat: "Security Operations", q: "What is chain of custody in forensics?", a: "A documented record of who handled evidence from collection through court presentation" },
+  { cat: "Security Operations", q: "What is a legal hold?", a: "A directive to preserve all relevant data in anticipation of legal proceedings" },
+  { cat: "Security Operations", q: "What tool is used for forensic imaging?", a: "FTK Imager<span class='acr-full'>(Forensic Toolkit Imager — captures disk images and memory dumps)</span>" },
+  { cat: "Security Operations", q: "What is Autopsy used for?", a: "An open-source digital forensics platform for analyzing disk images and recovering evidence" },
+  { cat: "Security Operations", q: "What does the Five Whys technique do?", a: "A root cause analysis method that repeatedly asks 'why' to drill down to the underlying cause of a problem" },
+  { cat: "Security Operations", q: "What is log monitoring used for?", a: "Detecting suspicious activity, security incidents, and compliance violations through audit trail review" },
+  { cat: "Security Operations", q: "What is data exfiltration?", a: "The unauthorized transfer of data from an organization to an external destination" },
+  { cat: "Security Operations", q: "Monitors and blocks unauthorized data transfers — network version inspects traffic, endpoint version monitors local actions", a: "DLP<span class='acr-full'>(Data Loss Prevention — tools that monitor and block unauthorized data transfers)</span>" },
+  { cat: "Security Operations", q: "What is tokenization?", a: "Replacing sensitive data with a non-sensitive token that maps back to the original data in a secure vault" },
+  { cat: "Security Operations", q: "What is data masking?", a: "Replacing real sensitive data with realistic but fictitious data for testing or development" },
+  { cat: "Security Operations", q: "What is DKIM?", a: "DKIM<span class='acr-full'>(DomainKeys Identified Mail — digitally signs email headers and body to prove authenticity)</span>" },
+  { cat: "Security Operations", q: "What is SPF?", a: "SPF<span class='acr-full'>(Sender Policy Framework — DNS record listing authorized mail servers for a domain)</span>" },
+  { cat: "Security Operations", q: "What is DMARC?", a: "DMARC<span class='acr-full'>(Domain-based Message Authentication Reporting and Conformance — uses SPF and DKIM to validate email and define handling policy)</span>" },
+  { cat: "Security Operations", q: "What is asset management?", a: "The process of tracking and managing all IT assets through their lifecycle from acquisition to decommissioning" },
+  { cat: "Security Operations", q: "What is change management in IT security?", a: "A formal process for reviewing, approving, testing, and documenting changes before implementation" },
+
+  // ========== IAM - IDENTITY & ACCESS MANAGEMENT ==========
+  { cat: "Identity & Access", q: "What are the four components of IAM?", a: "IAM<span class='acr-full'>(Identification, Authentication, Authorization, Access Control)</span>" },
+  { cat: "Identity & Access", q: "Requires two or more factors to authenticate: something you know, have, or are", a: "MFA<span class='acr-full'>(Multi-Factor Authentication — requires two or more factors: something you know, have, or are)</span>" },
+  { cat: "Identity & Access", q: "One login grants access to multiple systems or applications", a: "SSO<span class='acr-full'>(Single Sign-On — one login grants access to multiple systems)</span>" },
+  { cat: "Identity & Access", q: "Enables SSO by exchanging authentication data between identity and service providers", a: "SAML<span class='acr-full'>(Security Assertion Markup Language — enables SSO by exchanging authentication data between identity and service providers)</span>" },
+  { cat: "Identity & Access", q: "Allows third-party apps to access resources on behalf of a user without sharing passwords", a: "OAuth<span class='acr-full'>(Open Authorization — allows third-party apps to access resources without sharing passwords)</span>" },
+  { cat: "Identity & Access", q: "What is OpenID Connect?", a: "An identity layer on top of OAuth 2.0 used for authentication and SSO in web apps" },
+  { cat: "Identity & Access", q: "What is Kerberos?", a: "A network authentication protocol using tickets to prove identity — used in Active Directory<span class='acr-full'>(Port 88)</span>" },
+  { cat: "Identity & Access", q: "Authenticates network access using UDP — encrypts only the password, not the full session (ports 1812/1813)", a: "RADIUS<span class='acr-full'>(Remote Authentication Dial-In User Service — authenticates network access, encrypts only the password — ports 1812/1813)</span>" },
+  { cat: "Identity & Access", q: "Encrypts the entire authentication session — used for network device administration (port 49)", a: "TACACS+<span class='acr-full'>(Terminal Access Controller Access-Control System Plus — encrypts entire session, used for device administration — port 49)</span>" },
+  { cat: "Identity & Access", q: "What is the key difference between RADIUS and TACACS+?", a: "RADIUS encrypts only the password; TACACS+ encrypts the entire authentication session" },
+  { cat: "Identity & Access", q: "What is 802.1X?", a: "Port-based network access control — authenticates devices before granting network access, using RADIUS and EAP" },
+  { cat: "Identity & Access", q: "A flexible authentication framework used with 802.1X for network access control", a: "EAP<span class='acr-full'>(Extensible Authentication Protocol — flexible authentication framework used with 802.1X)</span>" },
+  { cat: "Identity & Access", q: "Sends credentials in plaintext — insecure legacy authentication protocol", a: "PAP<span class='acr-full'>(Password Authentication Protocol — sends credentials in plaintext, insecure)</span>" },
+  { cat: "Identity & Access", q: "Uses a three-way handshake and hashing for authentication — more secure than PAP", a: "CHAP<span class='acr-full'>(Challenge Handshake Authentication Protocol — uses three-way handshake and hashing, more secure than PAP)</span>" },
+  { cat: "Identity & Access", q: "What is federation in IAM?", a: "Allowing users from one organization to access resources in another using trusted identity assertions" },
+  { cat: "Identity & Access", q: "A temporary code that expires after ~30 seconds — used by authenticator apps", a: "TOTP<span class='acr-full'>(Time-based One-Time Password — a temporary code that expires after ~30 seconds, used by authenticator apps)</span>" },
+  { cat: "Identity & Access", q: "Generates one-time passwords based on a counter rather than time", a: "HOTP<span class='acr-full'>(HMAC-based One-Time Password — generates OTPs based on a counter rather than time)</span>" },
+  { cat: "Identity & Access", q: "What are biometrics?", a: "Authentication using unique physical characteristics like fingerprints, facial recognition, or retina scans" },
+  { cat: "Identity & Access", q: "What is the biometric crossover error rate?", a: "The point at which the false acceptance rate equals the false rejection rate — lower crossover = better biometric system" },
+  { cat: "Identity & Access", q: "Permissions assigned based on a user's job role", a: "RBAC<span class='acr-full'>(Role-Based Access Control — permissions assigned based on job role)</span>" },
+  { cat: "Identity & Access", q: "Access decisions based on attributes of the user, resource, and environment", a: "ABAC<span class='acr-full'>(Attribute-Based Access Control — access decisions based on attributes of users, resources, and environment)</span>" },
+  { cat: "Identity & Access", q: "Resource owner sets permissions — e.g., sharing your own files in Windows", a: "DAC<span class='acr-full'>(Discretionary Access Control — resource owner sets permissions, e.g., Windows file permissions)</span>" },
+  { cat: "Identity & Access", q: "OS enforces access based on security labels — used in military and government environments", a: "MAC<span class='acr-full'>(Mandatory Access Control — OS enforces access based on security labels, used in military/government)</span>" },
+  { cat: "Identity & Access", q: "Securing, monitoring, and controlling access to privileged accounts like admin and root", a: "PAM<span class='acr-full'>(Privileged Access Management — securing, monitoring, and controlling access to privileged accounts)</span>" },
+  { cat: "Identity & Access", q: "Queries directory services like Active Directory — port 389", a: "LDAP<span class='acr-full'>(Lightweight Directory Access Protocol — queries directory services like Active Directory — port 389)</span>" },
+  { cat: "Identity & Access", q: "What is a USB security key?", a: "A physical hardware token that must be plugged in to complete MFA — resistant to phishing" },
+  { cat: "Identity & Access", q: "What is Active Directory?", a: "Microsoft's directory service for managing users, computers, groups, and policies in a domain environment" },
+  { cat: "Identity & Access", q: "Applies configurations and restrictions to users and computers in Active Directory", a: "GPO<span class='acr-full'>(Group Policy Object — applies configurations and restrictions to users and computers in Active Directory)</span>" },
+  { cat: "Identity & Access", q: "What is account lockout policy?", a: "A policy that locks an account after a set number of failed login attempts to prevent brute force attacks" },
+
+  // ========== CRYPTOGRAPHY & PKI ==========
+  { cat: "Cryptography", q: "What is symmetric encryption?", a: "Encryption where the same key is used to encrypt and decrypt data — fast, used for bulk data" },
+  { cat: "Cryptography", q: "What is asymmetric encryption?", a: "Encryption using a key pair (public key encrypts, private key decrypts) — slower, used for key exchange and signatures" },
+  { cat: "Cryptography", q: "The current gold-standard symmetric cipher using 128, 192, or 256-bit keys", a: "AES<span class='acr-full'>(Advanced Encryption Standard — symmetric cipher using 128, 192, or 256-bit keys — current gold standard)</span>" },
+  { cat: "Cryptography", q: "A legacy 56-bit symmetric cipher now considered insecure", a: "DES<span class='acr-full'>(Data Encryption Standard — legacy 56-bit symmetric cipher, now considered insecure)</span>" },
+  { cat: "Cryptography", q: "Applies DES three times to increase effective key length — being phased out", a: "3DES<span class='acr-full'>(Triple DES — applies DES three times to increase key length, being phased out)</span>" },
+  { cat: "Cryptography", q: "An asymmetric encryption algorithm used for key exchange and digital signatures", a: "RSA<span class='acr-full'>(Rivest-Shamir-Adleman — asymmetric encryption algorithm used for key exchange and digital signatures)</span>" },
+  { cat: "Cryptography", q: "Provides equivalent security to RSA with much smaller key sizes", a: "ECC<span class='acr-full'>(Elliptic Curve Cryptography — provides equivalent security to RSA with much smaller key sizes)</span>" },
+  { cat: "Cryptography", q: "What is Diffie-Hellman used for?", a: "A key exchange protocol that allows two parties to agree on a shared secret over an insecure channel" },
+  { cat: "Cryptography", q: "What is hashing?", a: "A one-way function that converts data of any size into a fixed-length digest to verify integrity" },
+  { cat: "Cryptography", q: "What are the requirements for a good hash function?", a: "Fixed output length, one-way (irreversible), unique output per input, collision resistant" },
+  { cat: "Cryptography", q: "Produces a 256-bit hash — widely used and currently considered secure", a: "SHA-256<span class='acr-full'>(Secure Hash Algorithm 256-bit — produces a 256-bit hash, widely used and currently secure)</span>" },
+  { cat: "Cryptography", q: "Produces a 128-bit hash — vulnerable to collisions, no longer used for security", a: "MD5<span class='acr-full'>(Message Digest 5 — produces 128-bit hash, vulnerable to collisions, not used for security)</span>" },
+  { cat: "Cryptography", q: "Combines a hash with a shared secret key to verify both integrity and authenticity", a: "HMAC<span class='acr-full'>(Hash-based Message Authentication Code — combines a hash with a shared secret key to verify integrity and authenticity)</span>" },
+  { cat: "Cryptography", q: "What is a digital signature?", a: "Encrypting a hash with a private key to verify the sender's identity and ensure message integrity" },
+  { cat: "Cryptography", q: "What are the two goals of a digital signature?", a: "Authentication (proves who sent the message) and nonrepudiation (sender cannot deny sending)" },
+  { cat: "Cryptography", q: "What is steganography?", a: "Hiding secret data within seemingly harmless files like images or audio" },
+  { cat: "Cryptography", q: "The system of CAs, certificates, and policies for managing digital certificates", a: "PKI<span class='acr-full'>(Public Key Infrastructure — the system of CAs, certificates, and policies for managing digital certificates)</span>" },
+  { cat: "Cryptography", q: "A trusted entity that issues and validates digital certificates", a: "CA<span class='acr-full'>(Certificate Authority — a trusted entity that issues and validates digital certificates)</span>" },
+  { cat: "Cryptography", q: "What is an X.509 certificate?", a: "The standard format for digital certificates containing the public key, subject, issuer, and validity period" },
+  { cat: "Cryptography", q: "A list of digital certificates revoked before their expiry date", a: "CRL<span class='acr-full'>(Certificate Revocation List — a list of certificates that have been revoked before their expiry date)</span>" },
+  { cat: "Cryptography", q: "A real-time method for checking whether a digital certificate has been revoked", a: "OCSP<span class='acr-full'>(Online Certificate Status Protocol — a real-time method for checking whether a certificate is revoked)</span>" },
+  { cat: "Cryptography", q: "Encrypts data in transit between client and server — successor to SSL", a: "TLS<span class='acr-full'>(Transport Layer Security — encrypts data in transit between client and server, successor to SSL)</span>" },
+  { cat: "Cryptography", q: "What is HTTPS?", a: "HTTP over TLS — encrypted web traffic on port 443" },
+  { cat: "Cryptography", q: "What is a self-signed certificate?", a: "A certificate signed by the same entity that issued it — not trusted by browsers by default" },
+  { cat: "Cryptography", q: "What is perfect forward secrecy?", a: "A property ensuring that session keys cannot be decrypted even if the server's private key is later compromised" },
+  { cat: "Cryptography", q: "What is key escrow?", a: "A third party holds a copy of encryption keys in case they need to be recovered" },
+
+  // ========== SECURITY PROGRAM MANAGEMENT (20%) ==========
+  { cat: "Governance & Risk", q: "What is security governance?", a: "The system by which an organization directs its security approach to align with business objectives and manage risks" },
+  { cat: "Governance & Risk", q: "A framework integrating governance policies, risk management, and regulatory compliance", a: "GRC<span class='acr-full'>(Governance, Risk, and Compliance — a framework integrating governance policies, risk management, and regulatory compliance)</span>" },
+  { cat: "Governance & Risk", q: "What is a centralized governance model?", a: "A top-down approach where a central authority creates and enforces security policies throughout the organization" },
+  { cat: "Governance & Risk", q: "What is a decentralized governance model?", a: "A bottom-up approach where business units have authority to achieve security objectives in their own way" },
+  { cat: "Governance & Risk", q: "What is a security policy?", a: "A formal document stating management's expectations for security behaviors, responsibilities, and requirements" },
+  { cat: "Governance & Risk", q: "What is the difference between a policy and a procedure?", a: "A policy states what must be done; a procedure describes step-by-step how to do it" },
+  { cat: "Governance & Risk", q: "What is a security standard?", a: "A mandatory requirement specifying minimum security levels for systems or processes" },
+  { cat: "Governance & Risk", q: "What is a security guideline?", a: "A recommended practice that is not mandatory, providing advice for achieving security objectives" },
+  { cat: "Governance & Risk", q: "What is risk?", a: "The likelihood that a threat will exploit a vulnerability and the resulting impact" },
+  { cat: "Governance & Risk", q: "What is a threat?", a: "A possible event that could harm the confidentiality, integrity, or availability of data or systems" },
+  { cat: "Governance & Risk", q: "What is a vulnerability?", a: "A weakness in a system, process, or control that could be exploited by a threat" },
+  { cat: "Governance & Risk", q: "What is risk mitigation?", a: "Implementing controls to reduce the likelihood or impact of a risk" },
+  { cat: "Governance & Risk", q: "What is risk avoidance?", a: "Changing business practices to eliminate the risk entirely" },
+  { cat: "Governance & Risk", q: "What is risk transference?", a: "Shifting the financial impact of a risk to a third party through insurance or contracts" },
+  { cat: "Governance & Risk", q: "What is risk acceptance?", a: "Acknowledging a risk and choosing to operate within it without additional controls" },
+  { cat: "Governance & Risk", q: "What is quantitative risk assessment?", a: "Using numerical data and calculations to assign monetary values to risks" },
+  { cat: "Governance & Risk", q: "What is qualitative risk assessment?", a: "Using descriptive categories (high/medium/low) based on expert judgment rather than hard numbers" },
+  { cat: "Governance & Risk", q: "What is a risk register?", a: "A document that tracks identified risks, their severity, likelihood, impact, and mitigation plans" },
+  { cat: "Governance & Risk", q: "A voluntary framework with five functions: Identify, Protect, Detect, Respond, Recover", a: "NIST CSF<span class='acr-full'>(A voluntary framework with five functions: Identify, Protect, Detect, Respond, Recover)</span>" },
+  { cat: "Governance & Risk", q: "What are the NIST RMF steps?", a: "NIST RMF<span class='acr-full'>(7-step Risk Management Framework: Prepare, Categorize, Select, Implement, Assess, Authorize, Monitor)</span>" },
+  { cat: "Governance & Risk", q: "What does HIPAA protect?", a: "HIPAA<span class='acr-full'>(Health Insurance Portability and Accountability Act — protects the privacy and security of health information)</span>" },
+  { cat: "Governance & Risk", q: "What does PCI DSS govern?", a: "PCI DSS<span class='acr-full'>(Payment Card Industry Data Security Standard — governs credit card data security)</span>" },
+  { cat: "Governance & Risk", q: "What does GDPR regulate?", a: "GDPR<span class='acr-full'>(General Data Protection Regulation — EU regulation protecting personal data of EU citizens)</span>" },
+  { cat: "Governance & Risk", q: "What does SOX regulate?", a: "SOX<span class='acr-full'>(Sarbanes-Oxley Act — requires accurate financial reporting and IT controls for public companies)</span>" },
+  { cat: "Governance & Risk", q: "What does FERPA protect?", a: "FERPA<span class='acr-full'>(Family Educational Rights and Privacy Act — protects student education records)</span>" },
+  { cat: "Governance & Risk", q: "What does GLBA require?", a: "GLBA<span class='acr-full'>(Gramm-Leach-Bliley Act — requires financial institutions to protect customer financial information)</span>" },
+  { cat: "Governance & Risk", q: "Identifies critical systems and quantifies the financial and operational impact of their failure", a: "BIA<span class='acr-full'>(Business Impact Analysis — identifies critical systems and the financial/operational impact of their failure)</span>" },
+  { cat: "Governance & Risk", q: "A legal contract preventing parties from sharing confidential information", a: "NDA<span class='acr-full'>(Non-Disclosure Agreement — legal contract preventing parties from sharing confidential information)</span>" },
+  { cat: "Governance & Risk", q: "What is data minimization?", a: "Collecting and processing only the personal data strictly necessary for the intended purpose" },
+  { cat: "Governance & Risk", q: "What is data classification?", a: "Categorizing data by sensitivity level to apply appropriate security controls (e.g., public, internal, confidential, restricted)" },
+  { cat: "Governance & Risk", q: "What are the data roles in security?", a: "Data owner (accountable), data custodian (maintains security), data steward (manages quality), data processor (processes on behalf of owner)" },
+  { cat: "Governance & Risk", q: "What is security awareness training?", a: "Educating employees about security threats, policies, and their responsibilities to reduce human risk" },
+
+  // ========== NETWORK SECURITY PROTOCOLS ==========
+  { cat: "Secure Protocols", q: "What replaced Telnet for secure remote access?", a: "SSH<span class='acr-full'>(Secure Shell — port 22, encrypts the entire session)</span>" },
+  { cat: "Secure Protocols", q: "What replaced HTTP for secure web browsing?", a: "HTTPS<span class='acr-full'>(HTTP over TLS — port 443)</span>" },
+  { cat: "Secure Protocols", q: "FTP secured with TLS — explicit mode port 21, implicit mode port 990", a: "FTPS<span class='acr-full'>(FTP over TLS — explicit mode port 21, implicit mode port 990)</span>" },
+  { cat: "Secure Protocols", q: "File transfer over SSH — completely separate from FTPS, uses port 22", a: "SFTP<span class='acr-full'>(SSH File Transfer Protocol — file transfer over SSH, port 22)</span>" },
+  { cat: "Secure Protocols", q: "IMAP secured with TLS — secure email retrieval on port 993", a: "IMAPS<span class='acr-full'>(IMAP over TLS — secure email retrieval, port 993)</span>" },
+  { cat: "Secure Protocols", q: "POP3 secured with TLS — secure email retrieval on port 995", a: "POP3S<span class='acr-full'>(POP3 over TLS — secure email retrieval, port 995)</span>" },
+  { cat: "Secure Protocols", q: "LDAP secured with TLS — secure directory queries on port 636", a: "LDAPS<span class='acr-full'>(LDAP over TLS — secure directory queries, port 636)</span>" },
+  { cat: "Secure Protocols", q: "Adds encryption and authentication to SNMP — addresses weaknesses of v1 and v2c", a: "SNMPv3<span class='acr-full'>(Simple Network Management Protocol v3 — adds encryption and authentication over insecure v1/v2c)</span>" },
+  { cat: "Secure Protocols", q: "Encrypts VoIP, audio, and video streams in real time", a: "SRTP<span class='acr-full'>(Secure Real-Time Transport Protocol — encrypts VoIP/audio/video streams)</span>" },
+  { cat: "Secure Protocols", q: "Adds digital signatures to DNS records to prevent DNS poisoning attacks", a: "DNSSEC<span class='acr-full'>(DNS Security Extensions — adds digital signatures to DNS records to prevent poisoning)</span>" },
+  { cat: "Secure Protocols", q: "Encrypts and authenticates IP packets at Layer 3 — used for VPNs", a: "IPSec<span class='acr-full'>(Internet Protocol Security — encrypts and authenticates IP packets at Layer 3)</span>" },
+  { cat: "Secure Protocols", q: "What are the two IPSec modes?", a: "Transport mode (encrypts payload only) and Tunnel mode (encrypts entire packet including headers)" },
+  { cat: "Secure Protocols", q: "What wireless security protocol uses SAE?", a: "WPA3<span class='acr-full'>(SAE = Simultaneous Authentication of Equals — resistant to offline dictionary attacks)</span>" },
+
+
+  { cat: "Secure Protocols", q: "What is enterprise wireless authentication?", a: "Uses a RADIUS server with EAP protocol — each user authenticates individually (no shared PSK)" },
+];
+
+let deck = [...CARDS];
+let idx = 0;
+let flipped = false;
+let filter = "All";
+let scores = {};
+
+function getFiltered() {
+  if (filter === "All") return [...CARDS];
+  if (filter === "Missed") return CARDS.filter(c => scores[c.q] === "miss");
+  if (filter === "Shaky") return CARDS.filter(c => scores[c.q] === "shaky");
+  return CARDS.filter(c => c.cat === filter);
+}
+
+function shuffle(arr) {
+  for (let i = arr.length - 1; i > 0; i--) {
+    const j = Math.floor(Math.random() * (i + 1));
+    [arr[i], arr[j]] = [arr[j], arr[i]];
+  }
+  return arr;
+}
+
+function doShuffle() { deck = shuffle(getFiltered()); idx = 0; flipped = false; render(); }
+function setFilter(f) { filter = f; deck = getFiltered(); idx = 0; flipped = false; render(); }
+function flipCard() { flipped = !flipped; render(); }
+function prev() { if (idx > 0) { idx--; flipped = false; render(); } }
+function next() { if (idx < deck.length - 1) { idx++; flipped = false; render(); } }
+
+function score(level) {
+  if (deck.length === 0) return;
+  scores[deck[idx].q] = level;
+  if (idx < deck.length - 1) { idx++; flipped = false; }
+  render();
+}
+
+function getStats() {
+  let miss = 0, shaky = 0, got = 0, unseen = 0;
+  CARDS.forEach(c => {
+    const s = scores[c.q];
+    if (s === "miss") miss++; else if (s === "shaky") shaky++; else if (s === "got") got++; else unseen++;
+  });
+  return { miss, shaky, got, unseen };
+}
+
+const cats = ["All", ...new Set(CARDS.map(c => c.cat)), "Missed", "Shaky"];
+
+function render() {
+  const app = document.getElementById("app");
+  const stats = getStats();
+  const total = deck.length;
+  const progress = total > 0 ? ((idx + 1) / total * 100) : 0;
+  const card = deck[idx];
+
+  let catBtns = cats.map(c =>
+    `<button class="cat-btn ${filter === c ? 'active' : ''}" onclick="setFilter('${c}')">${c}${c === "Missed" ? ` (${stats.miss})` : c === "Shaky" ? ` (${stats.shaky})` : ''}</button>`
+  ).join('');
+
+  let cardHTML = '';
+  if (!card) {
+    cardHTML = `<div class="empty-state"><p>No cards in this category yet.</p><p>Study more and mark cards to see them here!</p></div>`;
+  } else {
+    cardHTML = `
+      <div class="card-container">
+        <div class="card ${flipped ? 'flipped' : ''}" onclick="flipCard()">
+          <div class="card-face card-front">
+            <div class="card-cat">${card.cat}</div>
+            <div class="card-question">${card.q}</div>
+            <div class="card-hint">tap to reveal</div>
+          </div>
+          <div class="card-face card-back">
+            <div class="card-cat">Answer</div>
+            <div class="card-answer">${card.a}</div>
+          </div>
+        </div>
+      </div>
+      <div class="conf-row">
+        <button class="conf-btn conf-miss" onclick="score('miss')">Missed</button>
+        <button class="conf-btn conf-shaky" onclick="score('shaky')">Shaky</button>
+        <button class="conf-btn conf-got" onclick="score('got')">Got it</button>
+      </div>`;
+  }
+
+  app.innerHTML = `
+    <h1>Security+ Flashcards</h1>
+    <div class="subtitle">SY0-701 · ${CARDS.length} cards · one question, one answer</div>
+    <div class="cat-bar">${catBtns}</div>
+    ${total > 0 ? `
+    <div class="filter-mode">${filter !== "All" && filter !== "Missed" && filter !== "Shaky" ? filter + ' · ' : ''}${idx + 1} of ${total}</div>
+    <div class="progress-wrap">
+      <div class="progress-bar"><div class="progress-fill" style="width:${progress}%"></div></div>
+      <div class="progress-text">${Math.round(progress)}%</div>
+    </div>` : ''}
+    ${cardHTML}
+    ${card ? `
+    <div class="nav-row">
+      <button class="nav-btn" onclick="prev()" ${idx === 0 ? 'disabled' : ''}>← Prev</button>
+      <button class="shuffle-btn" onclick="doShuffle()">Shuffle</button>
+      <button class="nav-btn" onclick="next()" ${idx >= total - 1 ? 'disabled' : ''}>Next →</button>
+    </div>` : ''}
+    <div class="stats">
+      <div class="stat stat-miss"><div class="stat-num">${stats.miss}</div><div class="stat-label">Missed</div></div>
+      <div class="stat stat-shaky"><div class="stat-num">${stats.shaky}</div><div class="stat-label">Shaky</div></div>
+      <div class="stat stat-got"><div class="stat-num">${stats.got}</div><div class="stat-label">Got It</div></div>
+      <div class="stat stat-unseen"><div class="stat-num">${stats.unseen}</div><div class="stat-label">Unseen</div></div>
+    </div>`;
+}
+
+doShuffle();
+</script>
+</body>
+</html>
